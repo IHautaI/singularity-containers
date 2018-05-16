@@ -1,0 +1,99 @@
+Bootstrap: docker
+FROM: openjdk:8-jdk-slim # broadinstitute/gatk
+
+
+%post
+
+  apt-get update
+  apt-get install -y wget bzip2 git libgomp1
+
+  wget -O git-lfs-linux-amd64-2.4.0.tar.gz 'https://github.com/git-lfs/git-lfs/releases/download/v2.4.0/git-lfs-linux-amd64-2.4.0.tar.gz'
+  tar xzf git-lfs-linux-amd64-2.4.0.tar.gz
+  cd git-lfs-2.4.0
+  ./install.sh
+  git lfs install
+  cd ../
+
+  groupadd dcistat
+
+
+##############################
+# BWA for alignment of reads to a genome
+##############################
+
+%appinstall bwa
+
+  wget -O bwakit-0.7.15_x64-linux.tar.bz2 'https://sourceforge.net/projects/bio-bwa/files/bwakit/bwakit-0.7.15_x64-linux.tar.bz2/download'
+  bunzip2 bwakit-0.7.15_x64-linux.tar.bz2
+  tar -xf bwakit-0.7.15_x64-linux.tar
+  ln -s bwa.kit/bwa bwa
+
+
+%applabels bwa
+
+
+%appenv bwa
+
+
+%apprun bwa
+
+  echo "running:"
+  echo " bwa $*"
+  bwa "$@"
+
+
+##############################
+# GATK software
+##############################
+
+%appinstall gatk
+
+  apt-get install -y python
+  git clone https://github.com/broadinstitute/gatk.git
+  cd gatk
+  ./gradlew localJar
+  mv gatk build/libs   # run-script needs to be in same dir as jar
+  # gatk script is now /scif/apps/gatk/gatk/build/libs/gatk
+  cd ..
+  chgrp dcistat gatk/build/libs/gatk
+  chmod a+x gatk/build/libs/gatk
+  ln -s `pwd`/gatk/build/libs/gatk `pwd`/bin/gatk
+
+# %applabels gatk
+
+
+# %appenv gatk
+
+
+%apprun gatk
+
+echo "running:"
+echo " gatk $*"
+gatk "$@"
+
+
+##############################
+# Picard software
+##############################
+
+%appinstall picard
+
+  git clone https://github.com/broadinstitute/picard.git
+  cd picard
+  ./gradlew shadowJar
+  cd ..
+  chgrp dcistat picard/build/libs/picard.jar
+  chmod a+x picard/build/libs/picard.jar
+  ln -s `pwd`/picard/build/libs/picard.jar `pwd`/bin/picard.jar
+
+# %applabels picard
+
+
+# %appenv picard
+
+
+%apprun picard
+
+echo "running:"
+echo " picard $*"
+java -jar ${SINGULARITY_APPROOT}/bin/picard.jar "$@"
