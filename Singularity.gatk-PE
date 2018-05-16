@@ -61,9 +61,7 @@ FROM: openjdk:8-jdk-slim # broadinstitute/gatk
 
 # %applabels gatk
 
-
 # %appenv gatk
-
 
 %apprun gatk
 
