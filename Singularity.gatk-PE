@@ -28,12 +28,9 @@ FROM: openjdk:8-jdk-slim # broadinstitute/gatk
   tar -xf bwakit-0.7.15_x64-linux.tar
   ln -s bwa.kit/bwa bwa
 
-
 %applabels bwa
 
-
 %appenv bwa
-
 
 %apprun bwa
 
